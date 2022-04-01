@@ -976,6 +976,7 @@ contract VRTDAO is ERC20 {
 
     event Minted (address to, uint256 mintedAmount);
     event Burnt (address to, uint256 mintedAmount);
+    event DaoAddressChanged (address oldDaoAddress, address newDaoAddress);
 
     constructor() ERC20(_name, _symbol) {
         _mint(msg.sender, 10000);
@@ -1019,4 +1020,9 @@ contract VRTDAO is ERC20 {
         transferOwnership(_newOwner);
     }
 
+    function setDAOAddress ( address _newDaoAddress) public onlyOwner { 
+        emit DaoAddressChanged (DAOAddress, _newDaoAddress);
+        DAOAddress = _newDaoAddress;
+    }
+    
 }
