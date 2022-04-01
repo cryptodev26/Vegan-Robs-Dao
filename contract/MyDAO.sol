@@ -76,9 +76,6 @@ interface IERC20 {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-// CAUTION
-// This version of SafeMath should only be used with Solidity 0.8 or later,
-// because it relies on the compiler's built in overflow checks.
 
 /**
  * @dev Wrappers over Solidity's arithmetic operations.
@@ -1022,25 +1019,29 @@ contract VRTDAO is ERC20 {
 }
 
 
-contract MyDAO {
+contract MyDAO is Ownable{
     //#region Declarations
-
     // The IERC20 allow us to use MyCoin like our governance token.
     //IERC20 public token;//*1
     VRTDAO public token;
 
     // Voting options.
-    enum VotingOptions {
-        Yes,
-        No
-    }
-
     // Status for the Proposal.
+
     enum Status {
         Accepted,
         Rejected,
         Pending
     }
+
+    event newVoteIsCreated (uint256 id, uint256 cteatedAt, string  name, string  source, uint256 voteTime);
+    event Voted (address votedAddress, uint256 voteAmount, bool voteSetting, Status result);
+
+    modifier isTokenOwner {
+        require(msg.sender == token.owner(), "you are not a owner");
+        _;
+    }
+
 
     // The proposal to vote.
     struct Proposal {
@@ -1063,6 +1064,10 @@ contract MyDAO {
         string name;
 
         string source;
+
+        bool isVoteEnded;
+
+        uint256 voteTime;
     }
 
     // List of all proposals.
@@ -1073,35 +1078,29 @@ contract MyDAO {
 
     // Number of governance tokens are deposited like a shares for a
     // shareholder to give a proportional weight to their vote.
-    mapping(address => uint256) public shares;
-
     // Totar of shares in the DAO.
-
-
     // Minimum tokens needed to create a proposal.
     // MYC 20.000000000000000000 = cent (like wei) 20,000,000,000,000,000,000
-
     // Max time to vote.
+
     uint256 private constant VOTING_MAX_TIME = 86400 * 7 ;
-
-    // Proposal index.
     uint256 public proposalIndex;
-
-    //#endregion
-
-    //#region Constructor
-
+    //  #endregion
+    //  #region Constructor
     /// @dev Sets the values for {tokenAddress}. tokenAddress is immutable, it can 
     /// only be set once during construction.
     /// @param tokenAddress The address of the governance token to be used in the DAO.
+
+
+
+
     constructor(address tokenAddress) {
         token = VRTDAO(tokenAddress);
-        //token = IERC20({token-address}).//*1
     }
 
 
-    function createProposal(string memory name, string memory url) external {
-        require(token.owner() == msg.sender, "owner");
+    function createProposal(string memory name, string memory url, uint256 voteTime) external isTokenOwner {
+        
 
         // Stores the new proposal.
         proposals[proposalIndex] = Proposal(
@@ -1113,36 +1112,44 @@ contract MyDAO {
             0,
             Status.Pending,
             name,
-            url
+            url,
+            false,
+            voteTime
         );
 
-        proposalIndex++;
+        emit newVoteIsCreated (proposalIndex, block.timestamp,  name, url, voteTime);
+        proposalIndex++;   
     }
 
 
 
-    
     function vote(uint256 proposalId, bool voteSetting) external {
 
         Proposal storage proposal = proposals[proposalId];
 
+        uint256 balance = token.balanceOf(msg.sender);
+
         require(!votesHistory[msg.sender][proposalId], "Already voted");
 
-        require(token.balanceOf(msg.sender) > 0, "there is no balance");
+        require(balance > 0, "there is no balance");
 
         require(
             // solhint-disable-next-line not-rely-on-time, It handle days as time period (not seconds).
-            block.timestamp <= proposal.createdAt + VOTING_MAX_TIME,
+            block.timestamp <= proposal.createdAt + proposal.voteTime,
             "Voting period is over"
         );
 
+        if (block.timestamp > proposal.createdAt + proposal.voteTime) {
+            proposal.isVoteEnded = true;
+        }
+
         votesHistory[msg.sender][proposalId] = true;
 
-        proposal.voteAmount += token.balanceOf(msg.sender);
+        proposal.voteAmount += balance;
 
         if (voteSetting == true) {
             // Yes.
-            proposal.votesForYes += token.balanceOf(msg.sender);
+            proposal.votesForYes += balance;
 
             // If the proposal has more than fifty percent of positive votes, change Accepted.
             if ((proposal.votesForYes * 100) / proposal.voteAmount > 50) {
@@ -1150,14 +1157,19 @@ contract MyDAO {
             }
         } else {
             // No.
-            proposal.votesForNo += token.balanceOf(msg.sender);
+            proposal.votesForNo += balance;
 
             // If the proposal has more than fifty percent of negative votes, change Rejected.
             if ((proposal.votesForNo * 100) / proposal.voteAmount > 50) {
                 proposal.status = Status.Rejected;
             }
         }
+
+        emit Voted (msg.sender, balance, voteSetting, proposal.status);
     }
 
-    //#endregion
+    function stopVoting (uint256 voteID) public isTokenOwner{
+        Proposal storage proposal = proposals[voteID];
+        proposal.isVoteEnded = true;
+    }
 }
