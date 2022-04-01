@@ -661,7 +661,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata, Ownable {
      * {IERC20-balanceOf} and {IERC20-transfer}.
      */
     function decimals() public view virtual override returns (uint8) {
-        return 18;
+        return 0;
     }
 
     /**
@@ -960,7 +960,63 @@ contract ERC20 is Context, IERC20, IERC20Metadata, Ownable {
 
 contract VRTDAO is ERC20 {
 
-    constructor(string memory name_, string memory symbol_, uint256 initialSupply) ERC20(name_, symbol_) {
-        _mint(msg.sender, initialSupply);
+    using SafeMath for uint256;
+    using Address for address;
+    mapping (address => bool) private _isBlacklisted;
+    string private _name = "Vegan Rob's DAO TOKEN";
+    string private _symbol = "VDT";
+    address[] public holder;
+
+    address DAOAddress = 0x29c3ACAf7Cd97c362cA39cc8e8Cdb64160621F8b;
+
+    modifier ownerOrDAO {
+       require(msg.sender == owner() || msg.sender == DAOAddress, "ownable : you can execute this function");
+       _; 
     }
+
+    event Minted (address to, uint256 mintedAmount);
+    event Burnt (address to, uint256 mintedAmount);
+
+    constructor() ERC20(_name, _symbol) {
+        _mint(msg.sender, 10000);
+        holder.push(msg.sender);
+        emit Transfer(address(0), _msgSender(), 10000);
+    }
+
+    function Mint (address _to, uint256 _mintAmount) public ownerOrDAO  {
+        _mint(_to, _mintAmount);
+        emit Minted(_to, _mintAmount);
+    }
+
+    function Burn (address _from, uint256 _burnAmount) external ownerOrDAO {
+        _burn(_from, _burnAmount);
+        emit Burnt(_from, _burnAmount);
+    }
+
+    function transfer(address recipient, uint256 amount) public override returns (bool) {
+        require (_isBlacklisted[msg.sender] == false, "this address is blacklisted!");
+        if(balanceOf(recipient)==0 && amount > 0){
+            holder.push(recipient);
+        }
+        if (balanceOf(msg.sender) == amount) {
+            for (uint256 i = 0; i < holder.length; i++) {
+                if (holder[i] == msg.sender) {
+                    holder[i] = holder[holder.length - 1];
+                    holder.pop();
+                    break;
+                }
+            }
+        }
+        _transfer(_msgSender(), recipient, amount);
+        return true;
+    }
+    function setBlackList (address _newBlackAddress, bool status) public ownerOrDAO {
+        _isBlacklisted[_newBlackAddress] = status;
+    }
+
+    function transferOwner (address _newOwner) public onlyOwner {
+        require(_newOwner != address(0), "can't transfer ownership to zero address");
+        transferOwnership(_newOwner);
+    }
+
 }
