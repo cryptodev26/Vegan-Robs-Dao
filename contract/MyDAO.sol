@@ -1052,6 +1052,8 @@ contract MyDAO {
         uint256 createdAt;
         // Number of Votes for Yes. This will allow us set an status for the proposal
         // when number of votes for any option be greater than fifty percent.
+        uint256 voteAmount;
+
         uint256 votesForYes;
         // Number of Votes for No.
         uint256 votesForNo;
@@ -1059,6 +1061,8 @@ contract MyDAO {
         Status status;
         // Name of the proposal.
         string name;
+
+        string source;
     }
 
     // List of all proposals.
@@ -1072,14 +1076,13 @@ contract MyDAO {
     mapping(address => uint256) public shares;
 
     // Totar of shares in the DAO.
-    uint256 public totalShares;
+
 
     // Minimum tokens needed to create a proposal.
     // MYC 20.000000000000000000 = cent (like wei) 20,000,000,000,000,000,000
-    uint256 private constant CREATE_PROPOSAL_MIN_SHARE = 20 * 10**18;
 
     // Max time to vote.
-    uint256 private constant VOTING_MAX_TIME = 7 days;
+    uint256 private constant VOTING_MAX_TIME = 86400 * 7 ;
 
     // Proposal index.
     uint256 public proposalIndex;
@@ -1096,46 +1099,9 @@ contract MyDAO {
         //token = IERC20({token-address}).//*1
     }
 
-    //#endregion
 
-    //#region External functions
-
-    /// @notice Allows you to deposit the amount of tokens specified in {amount} which will
-    /// be taken as shares to allow you to vote and create proposals.
-    /// @param amount The amount of tokens to deposit.
-    function deposit(uint256 amount) external {
-        shares[msg.sender] += amount;
-        totalShares += amount;
-
-        (bool success) = token.transferFrom(msg.sender, address(this), amount);
-        require(success, "Deposit fail");
-    }
-
-    /// @notice Allows the shareholders to withdraw their tokens when the voting period is over.
-    /// @param amount The amount of tokens to withdraw.
-    ///
-    /// Requirements:
-    /// - `sender` Must have the amount of tokens that want to withdraw.
-    function withdraw(uint256 amount) external {
-        require(shares[msg.sender] >= amount, "Amount exceed");
-
-        shares[msg.sender] -= amount;
-        totalShares -= amount;
-
-        (bool success) = token.transfer(msg.sender, amount);
-        require(success, "Withdraw fail");
-    }
-
-    /// @notice Create a new Proposal.
-    /// @param name The proposal name.
-    ///
-    /// Requirements:
-    /// - `sender` Must have at least the minimum shares to create a proposal.
-    function createProposal(string memory name) external {
-        require(
-            shares[msg.sender] >= CREATE_PROPOSAL_MIN_SHARE,
-            "Not enough shares"
-        );
+    function createProposal(string memory name, string memory url) external {
+        require(token.owner() == msg.sender, "owner");
 
         // Stores the new proposal.
         proposals[proposalIndex] = Proposal(
@@ -1144,30 +1110,25 @@ contract MyDAO {
             block.timestamp, // solhint-disable-line not-rely-on-time, It handle days as time period (not seconds).
             0,
             0,
+            0,
             Status.Pending,
-            name
+            name,
+            url
         );
 
         proposalIndex++;
     }
 
-    /// @notice Votes (for or against) the proposal corresponding to {proposalId} assigning
-    /// all the shares of the sender as number of votes
-    /// @dev If the proposal has more than fifty percent of votes in one option, the contract
-    /// need to change the proposal status to Accepted or Rejected.
-    ///
-    /// @param proposalId The {proposalId} to asign the vote.
-    /// @param voteOption VotingOptions.Yes (0) for a positive vote or VotingOptions.No (1)
-    /// for a negative vote.
-    ///
-    /// Requirements:
-    /// - `sender` must not have voted the proposal corresponding to {proposalId}.
-    /// - `sender` must vote within the specified time period (from proposal creation to
-    ///            {VOTING_MAX_TIME}).
-    function vote(uint256 proposalId, VotingOptions voteOption) external {
+
+
+    
+    function vote(uint256 proposalId, bool voteSetting) external {
+
         Proposal storage proposal = proposals[proposalId];
 
         require(!votesHistory[msg.sender][proposalId], "Already voted");
+
+        require(token.balanceOf(msg.sender) > 0, "there is no balance");
 
         require(
             // solhint-disable-next-line not-rely-on-time, It handle days as time period (not seconds).
@@ -1177,20 +1138,22 @@ contract MyDAO {
 
         votesHistory[msg.sender][proposalId] = true;
 
-        if (voteOption == VotingOptions.Yes) {
+        proposal.voteAmount += token.balanceOf(msg.sender);
+
+        if (voteSetting == true) {
             // Yes.
-            proposal.votesForYes += shares[msg.sender];
+            proposal.votesForYes += token.balanceOf(msg.sender);
 
             // If the proposal has more than fifty percent of positive votes, change Accepted.
-            if ((proposal.votesForYes * 100) / totalShares > 50) {
+            if ((proposal.votesForYes * 100) / proposal.voteAmount > 50) {
                 proposal.status = Status.Accepted;
             }
         } else {
             // No.
-            proposal.votesForNo += shares[msg.sender];
+            proposal.votesForNo += token.balanceOf(msg.sender);
 
             // If the proposal has more than fifty percent of negative votes, change Rejected.
-            if ((proposal.votesForNo * 100) / totalShares > 50) {
+            if ((proposal.votesForNo * 100) / proposal.voteAmount > 50) {
                 proposal.status = Status.Rejected;
             }
         }
