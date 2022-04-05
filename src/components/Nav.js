@@ -10,7 +10,7 @@ class TopNav extends Component {
     }
     render () {
         return (
-            <nav className="navbar navbar-expand-lg navbar-light bg-dark">
+            <nav className="navbar navbar-expand-lg navbar-light bg-primary">
                 {/* <!-- Container wrapper --> */}
                 <div className="container-fluid">
                     <div className="collapse navbar-collapse" id="navbarSupportedContent">

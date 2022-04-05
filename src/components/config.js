@@ -1,10 +1,10 @@
 export const RPC         =  "https://kovan.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
-export const vrtAddress  =  '0x61FE042EEF57D7663B819Bb84603E890540759eA'
-export const daoAddress  =  '0xaf914a4805d6Dcdf0DECFB87597618fA72409AAe'
+export const vrtAddress  =  '0xbCd099A8673f7b8e9270DBff27FE109C9c588D46'
+export const daoAddress  =  '0x1BCECA079aCB928550ecB367817C05Cc9FB7c656'
 
 
 
-export const  vrtABI = [
+export const  vrtABI =  [
     {
         "inputs": [],
         "stateMutability": "nonpayable",
@@ -33,6 +33,63 @@ export const  vrtABI = [
             }
         ],
         "name": "Approval",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "mintedAmount",
+                "type": "uint256"
+            }
+        ],
+        "name": "Burnt",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "oldDaoAddress",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "newDaoAddress",
+                "type": "address"
+            }
+        ],
+        "name": "DaoAddressChanged",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "mintedAmount",
+                "type": "uint256"
+            }
+        ],
+        "name": "Minted",
         "type": "event"
     },
     {
@@ -83,19 +140,36 @@ export const  vrtABI = [
         "inputs": [
             {
                 "internalType": "address",
-                "name": "",
+                "name": "_from",
                 "type": "address"
-            }
-        ],
-        "name": "_isBlacklisted",
-        "outputs": [
+            },
             {
-                "internalType": "bool",
-                "name": "",
-                "type": "bool"
+                "internalType": "uint256",
+                "name": "_burnAmount",
+                "type": "uint256"
             }
         ],
-        "stateMutability": "view",
+        "name": "Burn",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_to",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_mintAmount",
+                "type": "uint256"
+            }
+        ],
+        "name": "Mint",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
@@ -166,24 +240,6 @@ export const  vrtABI = [
         "type": "function"
     },
     {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "_address",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "_amount",
-                "type": "uint256"
-            }
-        ],
-        "name": "burn",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
         "inputs": [],
         "name": "decimals",
         "outputs": [
@@ -221,6 +277,38 @@ export const  vrtABI = [
         "type": "function"
     },
     {
+        "inputs": [],
+        "name": "getHolders",
+        "outputs": [
+            {
+                "internalType": "address[]",
+                "name": "",
+                "type": "address[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "holder",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
         "inputs": [
             {
                 "internalType": "address",
@@ -241,24 +329,6 @@ export const  vrtABI = [
                 "type": "bool"
             }
         ],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "_address",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "_amount",
-                "type": "uint256"
-            }
-        ],
-        "name": "mint",
-        "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
     },
@@ -291,6 +361,37 @@ export const  vrtABI = [
     {
         "inputs": [],
         "name": "renounceOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_newBlackAddress",
+                "type": "address"
+            },
+            {
+                "internalType": "bool",
+                "name": "status",
+                "type": "bool"
+            }
+        ],
+        "name": "setBlackList",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_newDaoAddress",
+                "type": "address"
+            }
+        ],
+        "name": "setDAOAddress",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -349,12 +450,12 @@ export const  vrtABI = [
         "inputs": [
             {
                 "internalType": "address",
-                "name": "sender",
+                "name": "from",
                 "type": "address"
             },
             {
                 "internalType": "address",
-                "name": "recipient",
+                "name": "to",
                 "type": "address"
             },
             {
@@ -378,6 +479,19 @@ export const  vrtABI = [
         "inputs": [
             {
                 "internalType": "address",
+                "name": "_newOwner",
+                "type": "address"
+            }
+        ],
+        "name": "transferOwner",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
                 "name": "newOwner",
                 "type": "address"
             }
@@ -386,10 +500,6 @@ export const  vrtABI = [
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
-    },
-    {
-        "stateMutability": "payable",
-        "type": "receive"
     }
 ]
 
@@ -557,11 +667,6 @@ export const  daoABI = [
                 "type": "uint256"
             },
             {
-                "internalType": "address",
-                "name": "author",
-                "type": "address"
-            },
-            {
                 "internalType": "uint256",
                 "name": "createdAt",
                 "type": "uint256"
@@ -578,7 +683,17 @@ export const  daoABI = [
             },
             {
                 "internalType": "uint256",
+                "name": "NumberOfYesMenber",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
                 "name": "votesForNo",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "NumberOfNoMember",
                 "type": "uint256"
             },
             {
