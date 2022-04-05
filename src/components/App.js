@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
-import { Button,InputGroup, FormControl, Card, Row, Tabs, Tab, Col, Nav} from 'react-bootstrap';
+import { Button,InputGroup, FormControl, Card, Row, Form, Tab, Col, Nav} from 'react-bootstrap';
 import { MDBDataTableV5 } from 'mdbreact';
 import Web3 from 'web3';
 import './App.css';
 import TopNav from './Nav';
-import {RPC, vrtAddress, vrtABI, daoABI,daoAddress} from './config'
+import {RPC, vrtAddress, vrtABI, daoABI,daoAddress, pinata_key, pinata_secret} from './config'
 const ethers = require('ethers')
+const axios = require('axios');
 
 const web3 = new Web3(new Web3.providers.HttpProvider(RPC));
 const vrtContract  = new web3.eth.Contract(vrtABI, vrtAddress)
@@ -69,8 +70,6 @@ class App extends Component {
     this.checkElectionStatus() 
   }
 
-
-
   async checkDashBoard (address){
     let balance = await vrtContract.methods.balanceOf(address).call()
     let owner   = await vrtContract.methods.owner().call()
@@ -90,7 +89,8 @@ class App extends Component {
       let tableRow = {
         id : i + 1,
         address : this.state.holders[i],
-        balance : balanceOfHolder / 1
+        balance : balanceOfHolder / 1,
+        percentage : (balanceOfHolder * 100 / this.state.totalSupply).toFixed(2) + '%'
       }
 
       let balanceTableData = this.state.holderTable
@@ -120,25 +120,33 @@ class App extends Component {
   async checkElectionStatus() {
 
     let numberOfActive = 0
-
     let NumberOfElection = await daoContract.methods.proposalIndex().call()
-
     for (let i = 0; i < NumberOfElection / 1; i++) {
-
       let RowData = await daoContract.methods.proposals(i).call()
       let tableData = this.state.electionTable
-      let status 
+      let activeOrEnded 
+      let status
+
       if (RowData.isVoteEnded){
-        status = "Ended"
+        activeOrEnded = "Ended"
       } else {
-        status = "active"
+        activeOrEnded = "active"
         numberOfActive += 1
       }
+
+      if (RowData.status == 0){
+        status = "Accepted"
+      } else {
+        status = "Rejected"
+      }
+
+      let time  = await this.unixStamp(RowData.createdAt/1 )
+
       let newRowData = {
-        id : RowData.id / 1,
+        id : RowData.id / 1 + 1,
         source : RowData.source,
         name   : RowData.name,
-        createdAt : RowData.createdAt / 1,
+        createdAt : time,
         voteTime  : RowData.voteTime / 1,
         NumberOfVoted : RowData.NumberOfYesMenber / 1 + RowData.NumberOfNoMember / 1,
         voteAmount    : RowData.voteAmount / 1,
@@ -146,8 +154,8 @@ class App extends Component {
         votesForYes : RowData.votesForYes / 1,
         NumberOfNoMember : RowData.NumberOfNoMember / 1,
         votesForNo : RowData.votesForNo / 1,
-        status : RowData.status / 1,
-        isVoteEnded : status
+        status : status,
+        isVoteEnded : activeOrEnded
       }
       tableData.push(newRowData);
 
@@ -164,6 +172,15 @@ class App extends Component {
 
 
   }
+
+  async unixStamp (unix_timestamp) {
+
+    var date = new Date(unix_timestamp * 1000);
+    // Hours part from the timestamp
+    var humanDateFormat = date.toLocaleString() 
+    return humanDateFormat
+  }
+
 
   render() {
 
@@ -183,6 +200,10 @@ class App extends Component {
         {
           label : 'Balance ',
           field : 'balance',
+        },  
+        {
+          label : 'Percentage ',
+          field : 'percentage',
         },  
       ],
       rows : rowsCaptureTable,
@@ -254,7 +275,7 @@ class App extends Component {
 
     return (
       <div>
-        <TopNav/><br/><br/><br/>
+        <TopNav/><br/><br/>
 
         <Tab.Container id="left-tabs-example" defaultActiveKey="first">
           <Row>
@@ -278,6 +299,8 @@ class App extends Component {
 
             <Col sm={10}>
               <Tab.Content>
+
+                {/* Dashboard */}
                 <Tab.Pane eventKey="first">
                   <h3>Vegan Rob's Governance Token</h3><hr/><br/>
                   <div className = "row">
@@ -312,14 +335,13 @@ class App extends Component {
                       </Card>
                     </div>
                   </div><br/><br/><br/><br/>
-                  <h3>Table of Vegan Rob's DAO Member</h3><hr/>
+                  <h3>Members of Vegan Rob's DAO</h3><hr/>
                   <MDBDataTableV5 hover entriesOptions={[5,10,20,50,100,200,500,1000]} entries={5} pagesAmount={300} data={holderTableData}  materialSearch /><br/><br/>
                 </Tab.Pane>
 
-
-
-
+                {/* Election Status */}
                 <Tab.Pane eventKey="second">
+                <h3>Elections</h3><hr/><br/>
                   <div className = "row">
                     <div className='col-4'>
                       <Card bg = "light">
@@ -333,7 +355,7 @@ class App extends Component {
                     </div>
                     <div className='col-4'>
                       <Card bg = "light">
-                        <Card.Header  bg = "dark" > <h6>Opended</h6></Card.Header>
+                        <Card.Header  bg = "dark" > <h6>Active Election</h6></Card.Header>
                         <Card.Body>
                           <Card.Text>
                             {this.state.OpenedNumberElection}
@@ -343,7 +365,7 @@ class App extends Component {
                     </div>
                     <div className='col-4'>
                       <Card bg = "light">
-                        <Card.Header  bg = "dark" > <h6>Ended</h6></Card.Header>
+                        <Card.Header  bg = "dark" > <h6>Closed Election</h6></Card.Header>
                         <Card.Body>
                           <Card.Text>
                             {this.state.EndedNumberElection}
@@ -352,13 +374,38 @@ class App extends Component {
                       </Card>
                     </div>
                   </div><br/><br/><br/><br/>
-
+                  <h3>Election Status</h3><hr/><br/>
                   <MDBDataTableV5 hover entriesOptions={[5,10,20,50,100,200,500,1000]} entries={5} pagesAmount={300} data={electionTable}  materialSearch /><br/><br/>
 
                 </Tab.Pane>
-                <Tab.Pane eventKey="third">
 
+                {/* New Election */}
+                <Tab.Pane eventKey="third">
+                <h3>Create New Election</h3><hr/><br/>
+                <div className='row'>
+                  <div className='col-1'></div>
+                  <div className='col-10'>
+
+                      <Form.Group className="position-relative mb-3">
+                        <Form.Label><h4>1. Select Attachments</h4></Form.Label>
+                        <Form.Control
+                          type="file"
+                          required
+                          name="file"
+                        />
+
+                    </Form.Group>
+
+
+
+
+                  </div>
+                  <div className='col-1'></div>
+                </div>
+                
                 </Tab.Pane>
+
+                {/* VOTE */}
                 <Tab.Pane eventKey="fouth">
 
                 </Tab.Pane>
