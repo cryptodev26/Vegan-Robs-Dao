@@ -1,6 +1,6 @@
-export const RPC         =  "https://kovan.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
-export const vrtAddress  =  '0xbCd099A8673f7b8e9270DBff27FE109C9c588D46'
-export const daoAddress  =  '0xe53cfd9793e51d042c41BaC7a01c56cFD1AAb396'
+export const RPC         =  "https://api.s0.b.hmny.io"
+export const vrtAddress  =  '0x2210a2ab51b7b31BDd510BED14A2d6023Ea02dC6'
+export const daoAddress  =  '0xAcF64869b26db17FAD0887aD3A1B367618126780'
 export const pinata_key  =  "3ec6e5bad6c152f9c93d"
 export const pinata_secret = "a3ccf4d2216ab2655ada4cff4273db391574632702711c2e0c80e435bb45e7af"
 

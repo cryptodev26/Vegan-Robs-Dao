@@ -464,7 +464,7 @@ class App extends Component {
 
                 </Tab.Pane>
 
-                {/* New Election */}
+                {/* VOTE */}
                 <Tab.Pane eventKey="third">
                 <h3>Create New Election</h3><hr/><br/>
                 <div className='row'>
@@ -494,9 +494,9 @@ class App extends Component {
                 
                 </Tab.Pane>
 
-                {/* VOTE */}
+                {/* vote */}
                 <Tab.Pane eventKey="fouth">
-
+                  <h4>Vote to New Products Election</h4><hr/><br/><br/>
                 </Tab.Pane>
               </Tab.Content>
             </Col>
