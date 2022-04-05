@@ -1,8 +1,8 @@
 export const RPC         =  "https://kovan.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
 export const vrtAddress  =  '0xbCd099A8673f7b8e9270DBff27FE109C9c588D46'
-export const daoAddress  =  '0x1BCECA079aCB928550ecB367817C05Cc9FB7c656'
-
-
+export const daoAddress  =  '0xe53cfd9793e51d042c41BaC7a01c56cFD1AAb396'
+export const pinata_key  =  "3ec6e5bad6c152f9c93d"
+export const pinata_secret = "a3ccf4d2216ab2655ada4cff4273db391574632702711c2e0c80e435bb45e7af"
 
 export const  vrtABI =  [
     {
@@ -503,7 +503,7 @@ export const  vrtABI =  [
     }
 ]
 
-export const  daoABI = [
+export const  daoABI =  [
     {
         "inputs": [
             {
@@ -591,12 +591,6 @@ export const  daoABI = [
                 "internalType": "string",
                 "name": "source",
                 "type": "string"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint256",
-                "name": "voteTime",
-                "type": "uint256"
             }
         ],
         "name": "newVoteIsCreated",
@@ -613,11 +607,6 @@ export const  daoABI = [
                 "internalType": "string",
                 "name": "url",
                 "type": "string"
-            },
-            {
-                "internalType": "uint256",
-                "name": "voteTime",
-                "type": "uint256"
             }
         ],
         "name": "createProposal",
@@ -814,4 +803,3 @@ export const  daoABI = [
         "type": "function"
     }
 ]
-

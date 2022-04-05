@@ -8,6 +8,8 @@ import {RPC, vrtAddress, vrtABI, daoABI,daoAddress, pinata_key, pinata_secret} f
 const ethers = require('ethers')
 const axios = require('axios');
 
+
+
 const web3 = new Web3(new Web3.providers.HttpProvider(RPC));
 const vrtContract  = new web3.eth.Contract(vrtABI, vrtAddress)
 const daoContract  = new web3.eth.Contract(daoABI, daoAddress)
@@ -29,7 +31,11 @@ class App extends Component {
       electionNumber : 0,
       OpenedNumberElection : 0,
       EndedNumberElection : 0,
-      electionTable : []
+      electionTable : [],
+
+      // create Election
+      attachment    : [],
+      electionContent : ''
     }
   }
 
@@ -80,6 +86,7 @@ class App extends Component {
       owner : owner,
       totalSupply : totalSupply / 1,
       holders : holders,
+      holderTable : []
     })
 
     for (let i = 0; i < this.state.holders.length; i++) {
@@ -121,6 +128,9 @@ class App extends Component {
 
     let numberOfActive = 0
     let NumberOfElection = await daoContract.methods.proposalIndex().call()
+    this.setState({
+      electionTable : []
+    })
     for (let i = 0; i < NumberOfElection / 1; i++) {
       let RowData = await daoContract.methods.proposals(i).call()
       let tableData = this.state.electionTable
@@ -144,7 +154,7 @@ class App extends Component {
 
       let newRowData = {
         id : RowData.id / 1 + 1,
-        source : RowData.source,
+        source :  <img src={RowData.source} width="100" />,
         name   : RowData.name,
         createdAt : time,
         voteTime  : RowData.voteTime / 1,
@@ -157,8 +167,8 @@ class App extends Component {
         status : status,
         isVoteEnded : activeOrEnded
       }
-      tableData.push(newRowData);
 
+      tableData.push(newRowData);
       this.setState({
         electionTable : tableData
       })
@@ -181,8 +191,68 @@ class App extends Component {
     return humanDateFormat
   }
 
+  async createElection(){
+    let url
+    if (this.state.attachment == null)
+      return; 
+    var pinataResponse  = await this.pinFileToIPFS(this.state.attachment)
+    if (pinataResponse.success) {
+      console.log(pinataResponse.pinataUrl)
+      // setURL(pinataResponse.pinataUrl)
+      url = pinataResponse.pinataUrl
+
+      
+      const linkedContract = new window.web3.eth.Contract(daoABI, daoAddress);
+      await linkedContract.methods.createProposal(this.state.electionContent + '', url+'')
+      .send({from : this.state.linkedAccount})
+      .once('confirmation', async () => {
+        this.checkElectionStatus()
+      })
+      
+      
+
+    } else {
+      return false;
+    }
+
+
+  }
+
+  async pinFileToIPFS(file) {
+    const url = `https://api.pinata.cloud/pinning/pinFileToIPFS`;
+    
+    let formData = new FormData();
+    formData.append('file', file);
+
+    return axios.post(url,
+        formData,
+        {
+            headers: {
+                'Content-Type': `multipart/form-data; boundary= ${formData._boundary}`,
+                'pinata_api_key': pinata_key,
+                'pinata_secret_api_key': pinata_secret
+            }
+        }
+    ).then(function (response) {
+        //handle response here
+        console.log(response)
+        return {
+            success: true,
+            pinataUrl: "https://gateway.pinata.cloud/ipfs/" + response.data.IpfsHash
+        }
+    }).catch(function (error) {
+        //handle error here
+        console.log(error)
+        return {
+            success: false,
+            message: error.message,
+        }
+    });
+};
+
 
   render() {
+
 
     var rowsCaptureTable = this.state.holderTable
     const holderTableData = {
@@ -198,12 +268,12 @@ class App extends Component {
             field : 'address',
         },
         {
-          label : 'Balance ',
-          field : 'balance',
+            label : 'Balance ',
+            field : 'balance',
         },  
         {
-          label : 'Percentage ',
-          field : 'percentage',
+            label : 'Percentage ',
+            field : 'percentage',
         },  
       ],
       rows : rowsCaptureTable,
@@ -270,6 +340,21 @@ class App extends Component {
     }
 
 
+    const handleElectionContent = (e) => {
+      let addLabel  = e.target.value
+      this.setState({
+        electionContent : addLabel
+      }) 
+    }   
+
+    const handleElectionAttachments = (e) => {
+      let addLabel  = e.target.files[0]
+      this.setState({
+        attachment : addLabel
+      }) 
+    }   
+
+
 
 
 
@@ -288,7 +373,7 @@ class App extends Component {
                   <Nav.Link eventKey="second">ELECTION STATUS</Nav.Link>
                 </Nav.Item><br/>
                 <Nav.Item>
-                  <Nav.Link eventKey="third">CREATE NEW ELECTIOM</Nav.Link>
+                  <Nav.Link eventKey="third">CREATE NEW ELECTION</Nav.Link>
                 </Nav.Item><br/>
                 <Nav.Item>
                   <Nav.Link eventKey="fouth">VOTE</Nav.Link>
@@ -386,17 +471,22 @@ class App extends Component {
                   <div className='col-1'></div>
                   <div className='col-10'>
 
-                      <Form.Group className="position-relative mb-3">
-                        <Form.Label><h4>1. Select Attachments</h4></Form.Label>
-                        <Form.Control
-                          type="file"
-                          required
-                          name="file"
-                        />
-                    </Form.Group>
+                    <Form.Group className="position-relative mb-3">
+                      <Form.Label><h4>1.Attachments</h4></Form.Label><hr/><br/>
+                      <Form.Control
+                        type="file"
+                        required
+                        name="file"
+                        onChange = {handleElectionAttachments}
+                        defaultValue = {this.state.electionContent}
+                      />
+                    </Form.Group><br/><br/>
 
-
-
+                    <h4>2.Content</h4><hr/><br/>
+                    <Form.Group className="mb-3" controlId="exampleForm.ControlTextarea1">
+                      <Form.Control as="textarea" rows={3} defaultValue = {this.state.electionContent}  onChange={handleElectionContent} placeholder = "please input content of Election"/>
+                    </Form.Group><br/>
+                    <Button variant="primary" onClick={()=> this.createElection()}>Create New Election</Button>
 
                   </div>
                   <div className='col-1'></div>

@@ -1034,7 +1034,7 @@ contract MyDAO is Ownable{
         Pending
     }
 
-    event newVoteIsCreated (uint256 id, uint256 cteatedAt, string  name, string  source, uint256 voteTime);
+    event newVoteIsCreated (uint256 id, uint256 cteatedAt, string  name, string  source);
     event Voted (address votedAddress, uint256 voteAmount, bool voteSetting, Status result);
 
     modifier isTokenOwner {
@@ -1093,7 +1093,7 @@ contract MyDAO is Ownable{
         token = VRTDAO(tokenAddress);
     }
 
-    function createProposal(string memory name, string memory url, uint256 voteTime) external isTokenOwner {
+    function createProposal(string memory name, string memory url) external isTokenOwner {
         
 
         // Stores the new proposal.
@@ -1109,10 +1109,10 @@ contract MyDAO is Ownable{
             name,
             url,
             false,
-            voteTime
+            86400
         );
 
-        emit newVoteIsCreated (proposalIndex, block.timestamp,  name, url, voteTime);
+        emit newVoteIsCreated (proposalIndex, block.timestamp,  name, url);
         proposalIndex++;   
     }
 
