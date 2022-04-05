@@ -1024,5 +1024,9 @@ contract VRTDAO is ERC20 {
         emit DaoAddressChanged (DAOAddress, _newDaoAddress);
         DAOAddress = _newDaoAddress;
     }
+
+    function getHolders () public view returns ( address[] memory )  {
+        return holder;
+    }
     
 }

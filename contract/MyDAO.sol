@@ -1047,26 +1047,22 @@ contract MyDAO is Ownable{
     struct Proposal {
         // Unique identifier of the proposal.
         uint256 id;
-        // Address from the account that create the proposal.
-        address author;
         // Creation date, that allow us to set a period of time for allow the voting.
         uint256 createdAt;
         // Number of Votes for Yes. This will allow us set an status for the proposal
         // when number of votes for any option be greater than fifty percent.
         uint256 voteAmount;
-
         uint256 votesForYes;
+        uint256 NumberOfYesMenber;
         // Number of Votes for No.
         uint256 votesForNo;
+        uint256 NumberOfNoMember;
         // Status for the Proposal.
         Status status;
         // Name of the proposal.
         string name;
-
         string source;
-
         bool isVoteEnded;
-
         uint256 voteTime;
     }
 
@@ -1085,6 +1081,7 @@ contract MyDAO is Ownable{
 
     uint256 private constant VOTING_MAX_TIME = 86400 * 7 ;
     uint256 public proposalIndex;
+    
     //  #endregion
     //  #region Constructor
     /// @dev Sets the values for {tokenAddress}. tokenAddress is immutable, it can 
@@ -1092,12 +1089,9 @@ contract MyDAO is Ownable{
     /// @param tokenAddress The address of the governance token to be used in the DAO.
 
 
-
-
     constructor(address tokenAddress) {
         token = VRTDAO(tokenAddress);
     }
-
 
     function createProposal(string memory name, string memory url, uint256 voteTime) external isTokenOwner {
         
@@ -1105,8 +1099,9 @@ contract MyDAO is Ownable{
         // Stores the new proposal.
         proposals[proposalIndex] = Proposal(
             proposalIndex,
-            msg.sender, 
             block.timestamp, // solhint-disable-line not-rely-on-time, It handle days as time period (not seconds).
+            0,
+            0,
             0,
             0,
             0,
@@ -1120,8 +1115,6 @@ contract MyDAO is Ownable{
         emit newVoteIsCreated (proposalIndex, block.timestamp,  name, url, voteTime);
         proposalIndex++;   
     }
-
-
 
     function vote(uint256 proposalId, bool voteSetting) external {
 
@@ -1150,6 +1143,7 @@ contract MyDAO is Ownable{
         if (voteSetting == true) {
             // Yes.
             proposal.votesForYes += balance;
+            proposal.NumberOfYesMenber += 1;
 
             // If the proposal has more than fifty percent of positive votes, change Accepted.
             if ((proposal.votesForYes * 100) / proposal.voteAmount > 50) {
@@ -1158,13 +1152,13 @@ contract MyDAO is Ownable{
         } else {
             // No.
             proposal.votesForNo += balance;
+            proposal.NumberOfNoMember += 1;
 
             // If the proposal has more than fifty percent of negative votes, change Rejected.
             if ((proposal.votesForNo * 100) / proposal.voteAmount > 50) {
                 proposal.status = Status.Rejected;
             }
         }
-
         emit Voted (msg.sender, balance, voteSetting, proposal.status);
     }
 
