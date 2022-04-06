@@ -1,18 +1,18 @@
 import React, { Component } from 'react';
-import { Button,InputGroup, FormControl, Card, Row, Form, Tab, Col, Nav} from 'react-bootstrap';
+import { Button,  Card, Row, Form, Tab, Col, Nav, ButtonGroup, Navbar, Container} from 'react-bootstrap';
 import { MDBDataTableV5 } from 'mdbreact';
 import Web3 from 'web3';
 import './App.css';
-import TopNav from './Nav';
 import {RPC, vrtAddress, vrtABI, daoABI,daoAddress, pinata_key, pinata_secret} from './config'
+import { FaRegUserCircle } from 'react-icons/fa';
 const ethers = require('ethers')
 const axios = require('axios');
-
 
 
 const web3 = new Web3(new Web3.providers.HttpProvider(RPC));
 const vrtContract  = new web3.eth.Contract(vrtABI, vrtAddress)
 const daoContract  = new web3.eth.Contract(daoABI, daoAddress)
+
 
 
 class App extends Component {
@@ -35,7 +35,9 @@ class App extends Component {
 
       // create Election
       attachment    : [],
-      electionContent : ''
+      electionContent : '',
+      // Vote Table
+      voteTable : []
     }
   }
 
@@ -45,6 +47,7 @@ class App extends Component {
         await window.ethereum.enable()
         const clientWeb3    = window.web3;
         const accounts = await clientWeb3.eth.getAccounts();
+      
         this.setState({
             linkedAccount : accounts[0]
         }) 
@@ -64,12 +67,24 @@ class App extends Component {
     }
 
     const { ethereum } = window;
-    ethereum.on('accountsChanged',  (accounts) => {
-      accounts =   web3.utils.toChecksumAddress(accounts + '')
-      this.setState({
-        linkedAccount : accounts
-      })
-      this.checkDashBoard(this.state.linkedAccount)
+    ethereum.on('accountsChanged',  async(accounts) => {
+      try{
+        accounts =   web3.utils.toChecksumAddress(accounts + '')
+      }catch(err){
+      }
+      
+      if (accounts == ''){
+        await window.ethereum.enable()
+        this.setState({
+          linkedAccount : ''
+        })
+      } else {
+        this.setState({
+          linkedAccount : accounts
+        })
+        this.checkDashBoard(this.state.linkedAccount)
+        this.checkElectionStatus();
+      }
     });
 
     this.checkDashBoard(this.state.linkedAccount) 
@@ -109,16 +124,16 @@ class App extends Component {
 
     if (address === owner){
       this.setState({
-        accountType : 'owner'
+        accountType : 'OWNER'
       })
     } else {
       if (balance > 0) {
         this.setState({
-          accountType : 'member'
+          accountType : 'MEMBER'
         })
       } else {
         this.setState({
-          accountType : 'guest'
+          accountType : 'GUEST'
         })
       } 
     }
@@ -129,43 +144,66 @@ class App extends Component {
     let numberOfActive = 0
     let NumberOfElection = await daoContract.methods.proposalIndex().call()
     this.setState({
-      electionTable : []
+      electionTable : [],
+      voteTable : []
     })
+    let VoteTable
     for (let i = 0; i < NumberOfElection / 1; i++) {
       let RowData = await daoContract.methods.proposals(i).call()
       let tableData = this.state.electionTable
       let activeOrEnded 
       let status
+      let voteTable
+
 
       if (RowData.isVoteEnded){
         activeOrEnded = "Ended"
       } else {
         activeOrEnded = "active"
         numberOfActive += 1
-      }
 
-      if (RowData.status == 0){
+        let votesHistory = await daoContract.methods.votesHistory(this.state.linkedAccount, i).call()
+        if (votesHistory === false){
+          voteTable = this.state.voteTable
+
+          let RowVoteData = {
+            electionID : i,
+            source :  <img src={RowData.source} width="80" />,
+            name   : RowData.name,
+            vote   :  <ButtonGroup size="sm" className="mb-2"><Button variant="success" onClick={()=> this.vote(i, true)}>Yes</Button><Button variant="danger" onClick={()=> this.vote(i,false)}>No</Button></ButtonGroup>
+          }
+
+          voteTable.push(RowVoteData)
+
+          this.setState ({
+            voteTable : voteTable
+          })
+        }
+      }
+      console.log(RowData.status)
+      if (RowData.status === 0){
         status = "Accepted"
-      } else {
+      } else if (RowData.status === 1) {
         status = "Rejected"
+      } else {
+        status = "pending"
       }
-
       let time  = await this.unixStamp(RowData.createdAt/1 )
 
       let newRowData = {
-        id : RowData.id / 1 + 1,
-        source :  <img src={RowData.source} width="100" />,
-        name   : RowData.name,
-        createdAt : time,
-        voteTime  : RowData.voteTime / 1,
-        NumberOfVoted : RowData.NumberOfYesMenber / 1 + RowData.NumberOfNoMember / 1,
-        voteAmount    : RowData.voteAmount / 1,
-        NumberOfYesMenber : RowData.NumberOfYesMenber / 1,
-        votesForYes : RowData.votesForYes / 1,
-        NumberOfNoMember : RowData.NumberOfNoMember / 1,
-        votesForNo : RowData.votesForNo / 1,
-        status : status,
-        isVoteEnded : activeOrEnded
+          id : RowData.id / 1 + 1,
+          source :  <img src={RowData.source} width="100" />,
+          name   : RowData.name,
+          createdAt : time,
+          voteTime  : RowData.voteTime / 1,
+          NumberOfVoted : RowData.NumberOfYesMenber / 1 + RowData.NumberOfNoMember / 1,
+          voteAmount    : RowData.voteAmount / 1,
+          NumberOfYesMenber : RowData.NumberOfYesMenber / 1,
+          votesForYes : RowData.votesForYes / 1,
+          NumberOfNoMember : RowData.NumberOfNoMember / 1,
+          votesForNo : RowData.votesForNo / 1,
+          status : status,
+          isVoteEnded : activeOrEnded
       }
 
       tableData.push(newRowData);
@@ -192,6 +230,10 @@ class App extends Component {
   }
 
   async createElection(){
+    if (this.state.accountType !== "OWNER"){
+      alert ("You are not a Owmer")
+      return
+    }
     let url
     if (this.state.attachment == null)
       return; 
@@ -200,8 +242,6 @@ class App extends Component {
       console.log(pinataResponse.pinataUrl)
       // setURL(pinataResponse.pinataUrl)
       url = pinataResponse.pinataUrl
-
-      
       const linkedContract = new window.web3.eth.Contract(daoABI, daoAddress);
       await linkedContract.methods.createProposal(this.state.electionContent + '', url+'')
       .send({from : this.state.linkedAccount})
@@ -248,8 +288,25 @@ class App extends Component {
             message: error.message,
         }
     });
-};
+  }
 
+  async vote(proposalID, trueOrFalse) {
+    if (this.state.accountType == "GUEST"){
+      alert("You are not a Member!")
+    }
+    let balance = await vrtContract.methods.balanceOf(this.state.linkedAccount).call()
+    if (balance == 0) {
+      alert ("you are not a member of Vegan Rob's DAO")
+      return
+    }
+
+    const linkedContract = new window.web3.eth.Contract(daoABI, daoAddress);
+      await linkedContract.methods.vote(proposalID , trueOrFalse)
+      .send({from : this.state.linkedAccount})
+      .once('confirmation', async () => {
+        this.checkElectionStatus()
+      })
+  }
 
   render() {
 
@@ -339,6 +396,28 @@ class App extends Component {
      rows : rowsCaptureTableElection,
     }
 
+    var rowsCaptureTableVote = this.state.voteTable
+    const voteTable = {
+      columns : [
+        {
+            label : 'Election Number',
+            field : 'electionID',
+        },
+        {
+            label : 'Image ',
+            field : 'source',
+        },  
+        {
+            label : 'Content ',
+            field : 'name',
+        },  
+        {
+          label : 'Vote ',
+          field : 'vote',
+      },  
+      ],
+      rows : rowsCaptureTableVote,
+    }
 
     const handleElectionContent = (e) => {
       let addLabel  = e.target.value
@@ -354,13 +433,35 @@ class App extends Component {
       }) 
     }   
 
-
-
-
-
     return (
       <div>
-        <TopNav/><br/><br/>
+        <nav className="navbar navbar-expand-lg navbar-light bg-primary" 
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}
+        >
+          <div>
+              <Navbar.Brand href="#home"><h1 className="text-light">  <b>&nbsp;&nbsp;VEGAN ROB'S DAO</b></h1>
+              </Navbar.Brand>
+          </div>
+          <div 
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '32px',
+              paddingRight: '32px'
+            }}
+          >
+            <h1 style={{color : 'white'}}><FaRegUserCircle/></h1>
+            <div>
+              <p style={{color : 'white',margin : '2px'}}><b>{this.state.accountType}</b></p>
+              <p style={{color : 'white', margin : '2px'}}>{this.state.linkedAccount.slice(0,8) + "..."}</p>
+            </div>
+          </div>
+        </nav><br/><br/>
+
 
         <Tab.Container id="left-tabs-example" defaultActiveKey="first">
           <Row>
@@ -497,6 +598,7 @@ class App extends Component {
                 {/* vote */}
                 <Tab.Pane eventKey="fouth">
                   <h4>Vote to New Products Election</h4><hr/><br/><br/>
+                  <MDBDataTableV5 hover entriesOptions={[5,10,20,50,100,200,500,1000]} entries={5} pagesAmount={300} data={voteTable}  materialSearch /><br/><br/>
                 </Tab.Pane>
               </Tab.Content>
             </Col>
