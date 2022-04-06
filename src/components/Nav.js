@@ -14,7 +14,7 @@ class TopNav extends Component {
                 {/* <!-- Container wrapper --> */}
                 <div className="container-fluid">
                     <div className="collapse navbar-collapse" id="navbarSupportedContent">
-                    <Navbar.Brand href="#home"><h1 className="text-light">  &nbsp;&nbsp;VEGAN ROB'S DAO</h1>
+                    <Navbar.Brand href="#home"><h1 className="text-light">  <b>&nbsp;&nbsp;VEGAN ROB'S DAO</b></h1>
                     </Navbar.Brand>
                     </div>
                 </div>

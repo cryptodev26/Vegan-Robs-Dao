@@ -367,16 +367,16 @@ class App extends Component {
             <Col sm={2}>
               <Nav variant="pills" className="flex-column">
                 <Nav.Item>
-                  <Nav.Link eventKey="first">DASHBOARD</Nav.Link>
+                  <Nav.Link eventKey="first"><b>DASHBOARD</b></Nav.Link>
                 </Nav.Item><br/>
                 <Nav.Item>
-                  <Nav.Link eventKey="second">ELECTION STATUS</Nav.Link>
+                  <Nav.Link eventKey="second"><b>ELECTION STATUS</b></Nav.Link>
                 </Nav.Item><br/>
                 <Nav.Item>
-                  <Nav.Link eventKey="third">CREATE NEW ELECTION</Nav.Link>
+                  <Nav.Link eventKey="third"><b>CREATE NEW ELECTION</b></Nav.Link>
                 </Nav.Item><br/>
                 <Nav.Item>
-                  <Nav.Link eventKey="fouth">VOTE</Nav.Link>
+                  <Nav.Link eventKey="fouth"><b>VOTE</b></Nav.Link>
                 </Nav.Item>
               </Nav>
             </Col>
