@@ -78,13 +78,12 @@ class App extends Component {
         this.setState({
           linkedAccount : ''
         })
-      } else {
-        this.setState({
-          linkedAccount : accounts
-        })
-        this.checkDashBoard(this.state.linkedAccount)
-        this.checkElectionStatus();
-      }
+      } else {}
+      this.setState({
+        linkedAccount : accounts
+      })
+      this.checkDashBoard(this.state.linkedAccount)
+      this.checkElectionStatus();
     });
 
     this.checkDashBoard(this.state.linkedAccount) 
@@ -278,7 +277,7 @@ class App extends Component {
         console.log(response)
         return {
             success: true,
-            pinataUrl: "https://gateway.pinata.cloud/ipfs/" + response.data.IpfsHash
+            pinataUrl: "https://vrdao.mypinata.cloud/ipfs/" + response.data.IpfsHash
         }
     }).catch(function (error) {
         //handle error here

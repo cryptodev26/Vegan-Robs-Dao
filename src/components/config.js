@@ -1,8 +1,8 @@
 export const RPC         =  "https://api.s0.b.hmny.io"
 export const vrtAddress  =  '0x2210a2ab51b7b31BDd510BED14A2d6023Ea02dC6'
-export const daoAddress  =  '0xAcF64869b26db17FAD0887aD3A1B367618126780'
-export const pinata_key  =  "3ec6e5bad6c152f9c93d"
-export const pinata_secret = "a3ccf4d2216ab2655ada4cff4273db391574632702711c2e0c80e435bb45e7af"
+export const daoAddress  =  '0x2A91845A0e11EC00068e1565c18BaD794c9d813F'
+export const pinata_key  =  "2cb0952b2165aa3a6807"
+export const pinata_secret = "8b8279f9f502c8b1a792cf37e95e9ec3ce09b96a7c504d01b8662e8ade908dfa"
 
 export const  vrtABI =  [
     {
