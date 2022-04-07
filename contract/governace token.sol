@@ -958,7 +958,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata, Ownable {
     ) internal virtual {}
 }
 
-contract VRTDAO is ERC20 {
+contract VDT is ERC20 {
 
     using SafeMath for uint256;
     using Address for address;
@@ -1028,5 +1028,5 @@ contract VRTDAO is ERC20 {
     function getHolders () public view returns ( address[] memory )  {
         return holder;
     }
-    
+
 }

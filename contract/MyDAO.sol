@@ -1166,4 +1166,9 @@ contract MyDAO is Ownable{
         Proposal storage proposal = proposals[voteID];
         proposal.isVoteEnded = true;
     }
+
+    function transferOwner (address _newOwner) public onlyOwner {
+        require(_newOwner != address(0), "can't transfer ownership to zero address");
+        transferOwnership(_newOwner);
+    }
 }

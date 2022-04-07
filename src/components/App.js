@@ -240,6 +240,13 @@ class App extends Component {
     if (pinataResponse.success) {
       console.log(pinataResponse.pinataUrl)
       // setURL(pinataResponse.pinataUrl)
+
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: web3.utils.toHex(1666600000) }],
+      });
+
+
       url = pinataResponse.pinataUrl
       const linkedContract = new window.web3.eth.Contract(daoABI, daoAddress);
       await linkedContract.methods.createProposal(this.state.electionContent + '', url+'')
@@ -298,6 +305,11 @@ class App extends Component {
       alert ("you are not a member of Vegan Rob's DAO")
       return
     }
+
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: web3.utils.toHex(1666600000) }],
+    });
 
     const linkedContract = new window.web3.eth.Contract(daoABI, daoAddress);
       await linkedContract.methods.vote(proposalID , trueOrFalse)

@@ -1,6 +1,6 @@
-export const RPC         =  "https://api.s0.b.hmny.io"
-export const vrtAddress  =  '0x2210a2ab51b7b31BDd510BED14A2d6023Ea02dC6'
-export const daoAddress  =  '0x2A91845A0e11EC00068e1565c18BaD794c9d813F'
+export const RPC         =  "https://api.harmony.one"
+export const vrtAddress  =  '0xF7E74aB344167017B0c62F4D719A1D167246f164'
+export const daoAddress  =  '0x3ceBeE664597ec363ff9A2081C6170e6A6E4E2ea'
 export const pinata_key  =  "2cb0952b2165aa3a6807"
 export const pinata_secret = "8b8279f9f502c8b1a792cf37e95e9ec3ce09b96a7c504d01b8662e8ade908dfa"
 
@@ -745,6 +745,19 @@ export const  daoABI =  [
             }
         ],
         "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_newOwner",
+                "type": "address"
+            }
+        ],
+        "name": "transferOwner",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
