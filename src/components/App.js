@@ -41,53 +41,49 @@ class App extends Component {
     }
   }
 
-  async componentWillMount(){
-    if(window.ethereum) {
-        window.web3 = new Web3(window.ethereum)
-        await window.ethereum.enable()
-        const clientWeb3    = window.web3;
-        const accounts = await clientWeb3.eth.getAccounts();
-      
-        this.setState({
-            linkedAccount : accounts[0]
-        }) 
-    } 
-    else if(window.web3) {
-        window.web3 = new Web3(window.web3.currentProvider)
-        const clientWeb3    = window.web3;
-        const accounts = await clientWeb3.eth.getAccounts();
-        this.setState({
-            linkedAccount : accounts[0]
-        }) 
-    } else {
-        window.alert('Non-Ethereum browser detected. Your should consider trying MetaMask!')
-    }
-    if(this.state.linkedAccount === ''){
-        return
-    }
 
-    const { ethereum } = window;
-    ethereum.on('accountsChanged',  async(accounts) => {
-      try{
-        accounts =   web3.utils.toChecksumAddress(accounts + '')
-      }catch(err){
-      }
-      
-      if (accounts == ''){
-        await window.ethereum.enable()
-        this.setState({
-          linkedAccount : ''
-        })
-      } else {}
-      this.setState({
-        linkedAccount : accounts
-      })
-      this.checkDashBoard(this.state.linkedAccount)
-      this.checkElectionStatus();
-    });
 
-    this.checkDashBoard(this.state.linkedAccount) 
-    this.checkElectionStatus() 
+  async walletConnect(){
+          if(window.ethereum) {
+            window.web3 = new Web3(window.ethereum)
+            await window.ethereum.enable()
+            const clientWeb3    = window.web3;
+            const accounts = await clientWeb3.eth.getAccounts();
+          
+            this.setState({
+                linkedAccount : accounts[0]
+            }) 
+        } 
+        else if(window.web3) {
+            window.web3 = new Web3(window.web3.currentProvider)
+            const clientWeb3    = window.web3;
+            const accounts = await clientWeb3.eth.getAccounts();
+            this.setState({
+                linkedAccount : accounts[0]
+            }) 
+        } else {
+            window.alert('Non-Ethereum browser detected. Your should consider trying MetaMask!')
+        }
+        if(this.state.linkedAccount === ''){
+            return
+        }
+
+        const { ethereum } = window;
+        ethereum.on('accountsChanged',  async(accounts) => {
+          try{
+            accounts =   web3.utils.toChecksumAddress(accounts + '')
+          }catch(err){
+          }
+          
+          this.setState({
+            linkedAccount : accounts
+          })
+          this.checkDashBoard(this.state.linkedAccount)
+          this.checkElectionStatus();
+        });
+
+        this.checkDashBoard(this.state.linkedAccount) 
+        this.checkElectionStatus() 
   }
 
   async checkDashBoard (address){
@@ -454,7 +450,7 @@ class App extends Component {
           }}
         >
           <div>
-              <Navbar.Brand href="#home"><h1 className="text-light">  <b>&nbsp;&nbsp;VEGAN ROB'S DAO</b></h1>
+              <Navbar.Brand href="#home"><h1 className="text-light"  >  <b>&nbsp;&nbsp;VEGAN ROB'S DAO</b></h1>
               </Navbar.Brand>
           </div>
           <div 
@@ -465,6 +461,7 @@ class App extends Component {
               paddingRight: '32px'
             }}
           >
+            <Button variant='outline-light primary' onClick={()=>this.walletConnect()}  disabled = {this.state.linkedAccount != ""}>Connect Wallet</Button>
             <h1 style={{color : 'white'}}><FaRegUserCircle/></h1>
             <div>
               <p style={{color : 'white',margin : '2px'}}><b>{this.state.accountType}</b></p>
@@ -533,7 +530,7 @@ class App extends Component {
                     </div>
                   </div><br/><br/><br/><br/>
                   <h3>Members of Vegan Rob's DAO</h3><hr/>
-                  <MDBDataTableV5 hover entriesOptions={[5,10,20,50,100,200,500,1000]} entries={5} pagesAmount={300} data={holderTableData}  materialSearch /><br/><br/>
+                  <MDBDataTableV5 hover entriesOptions={[5,10,20,50,100,200,500,1000]} entries={5} pagesAmount={300} data={holderTableData}  materialSearch responsive/><br/><br/>
                 </Tab.Pane>
 
                 {/* Election Status */}
@@ -572,7 +569,7 @@ class App extends Component {
                     </div>
                   </div><br/><br/><br/><br/>
                   <h3>Election Status</h3><hr/><br/>
-                  <MDBDataTableV5 hover entriesOptions={[5,10,20,50,100,200,500,1000]} entries={5} pagesAmount={300} data={electionTable}  materialSearch /><br/><br/>
+                  <MDBDataTableV5 hover entriesOptions={[5,10,20,50,100,200,500,1000]} entries={5} pagesAmount={300} data={electionTable}  materialSearch responsive/><br/><br/>
 
                 </Tab.Pane>
 
@@ -609,7 +606,7 @@ class App extends Component {
                 {/* vote */}
                 <Tab.Pane eventKey="fouth">
                   <h4>Vote to New Products Election</h4><hr/><br/><br/>
-                  <MDBDataTableV5 hover entriesOptions={[5,10,20,50,100,200,500,1000]} entries={5} pagesAmount={300} data={voteTable}  materialSearch /><br/><br/>
+                  <MDBDataTableV5 hover entriesOptions={[5,10,20,50,100,200,500,1000]} entries={5} pagesAmount={300} data={voteTable}  materialSearch responsive/><br/><br/>
                 </Tab.Pane>
               </Tab.Content>
             </Col>
