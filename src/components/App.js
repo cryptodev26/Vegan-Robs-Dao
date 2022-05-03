@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
-import { Button,  Card, Row, Form, Tab, Col, Nav, ButtonGroup, Navbar, Container} from 'react-bootstrap';
+import { Button,  Card, Row, Form, Tab, Col, Nav, ButtonGroup, Navbar} from 'react-bootstrap';
 import { MDBDataTableV5 } from 'mdbreact';
 import Web3 from 'web3';
 import './App.css';
 import {RPC, vrtAddress, vrtABI, daoABI,daoAddress, pinata_key, pinata_secret} from './config'
 import { FaRegUserCircle } from 'react-icons/fa';
-const ethers = require('ethers')
+
 const axios = require('axios');
 
 
@@ -41,19 +41,22 @@ class App extends Component {
     }
   }
 
-
-
   async walletConnect(){
-          if(window.ethereum) {
-            window.web3 = new Web3(window.ethereum)
-            await window.ethereum.enable()
-            const clientWeb3    = window.web3;
-            const accounts = await clientWeb3.eth.getAccounts();
-          
-            this.setState({
-                linkedAccount : accounts[0]
-            }) 
+
+        if(window.ethereum) {
+          window.web3 = new Web3(window.ethereum)
+          await window.ethereum.enable()
+          const clientWeb3    = window.web3;
+          const accounts = await clientWeb3.eth.getAccounts();
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: web3.utils.toHex(1666600000) }],
+          });
+          this.setState({
+              linkedAccount : accounts[0]
+          }) 
         } 
+
         else if(window.web3) {
             window.web3 = new Web3(window.web3.currentProvider)
             const clientWeb3    = window.web3;
@@ -61,14 +64,27 @@ class App extends Component {
             this.setState({
                 linkedAccount : accounts[0]
             }) 
-        } else {
-            window.alert('Non-Ethereum browser detected. Your should consider trying MetaMask!')
+        } 
+        else { 
+            const accounts = await window.ethereum.request({
+              method: "eth_requestAccounts",
+            });
+            await window.ethereum.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: web3.utils.toHex(1666600000) }],
+            });
+            this.setState({
+              linkedAccount : accounts[0]
+            })
+
         }
+
         if(this.state.linkedAccount === ''){
             return
         }
 
         const { ethereum } = window;
+
         ethereum.on('accountsChanged',  async(accounts) => {
           try{
             accounts =   web3.utils.toChecksumAddress(accounts + '')
@@ -81,6 +97,14 @@ class App extends Component {
           this.checkDashBoard(this.state.linkedAccount)
           this.checkElectionStatus();
         });
+
+        ethereum.on('chainChanged', async(chainId) => {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: web3.utils.toHex(1666600000) }],
+          });
+        });
+
 
         this.checkDashBoard(this.state.linkedAccount) 
         this.checkElectionStatus() 
@@ -142,7 +166,6 @@ class App extends Component {
       electionTable : [],
       voteTable : []
     })
-    let VoteTable
     for (let i = 0; i < NumberOfElection / 1; i++) {
       let RowData = await daoContract.methods.proposals(i).call()
       let tableData = this.state.electionTable
@@ -230,7 +253,7 @@ class App extends Component {
       return
     }
     let url
-    if (this.state.attachment == null)
+    if (this.state.attachment === null)
       return; 
     var pinataResponse  = await this.pinFileToIPFS(this.state.attachment)
     if (pinataResponse.success) {
@@ -293,11 +316,11 @@ class App extends Component {
   }
 
   async vote(proposalID, trueOrFalse) {
-    if (this.state.accountType == "GUEST"){
+    if (this.state.accountType === "GUEST"){
       alert("You are not a Member!")
     }
     let balance = await vrtContract.methods.balanceOf(this.state.linkedAccount).call()
-    if (balance == 0) {
+    if (balance === 0) {
       alert ("you are not a member of Vegan Rob's DAO")
       return
     }
@@ -461,7 +484,7 @@ class App extends Component {
               paddingRight: '32px'
             }}
           >
-            <Button variant='outline-light primary' onClick={()=>this.walletConnect()}  disabled = {this.state.linkedAccount != ""}>Connect Wallet</Button>
+            <Button variant='outline-light primary' onClick={()=>this.walletConnect()}  disabled = {this.state.linkedAccount !== ""}>Connect Wallet</Button>
             <h1 style={{color : 'white'}}><FaRegUserCircle/></h1>
             <div>
               <p style={{color : 'white',margin : '2px'}}><b>{this.state.accountType}</b></p>
