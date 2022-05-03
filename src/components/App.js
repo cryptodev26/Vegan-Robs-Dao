@@ -42,21 +42,52 @@ class App extends Component {
   }
 
   async walletConnect(){
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: web3.utils.toHex(1666600000) }],
+      });
+    } catch (switchError) {
+      // This error code indicates that the chain has not been added to MetaMask.
+      if (switchError.code === 4902) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [
+              {
+                chainId:  web3.utils.toHex(1666600000),
+                chainName: 'Harmony Mainnet',
+                rpcUrls: ['https://api.harmony.one'],
+                nativeCurrency: {
+                  name: "ONE",
+                  symbol: "ONE", // 2-6 characters long
+                  decimals: 18,
+                },
+                blockExplorerUrls : "https://explorer.harmony.one/",
+              },
+            ],
+          });
+
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: web3.utils.toHex(1666600000) }],
+          });
+
+        } catch (addError) {
+        }
+      }
+    }
+    
 
         if(window.ethereum) {
           window.web3 = new Web3(window.ethereum)
           await window.ethereum.enable()
           const clientWeb3    = window.web3;
           const accounts = await clientWeb3.eth.getAccounts();
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: web3.utils.toHex(1666600000) }],
-          });
           this.setState({
               linkedAccount : accounts[0]
           }) 
         } 
-
         else if(window.web3) {
             window.web3 = new Web3(window.web3.currentProvider)
             const clientWeb3    = window.web3;
@@ -65,26 +96,13 @@ class App extends Component {
                 linkedAccount : accounts[0]
             }) 
         } 
-        else { 
-            const accounts = await window.ethereum.request({
-              method: "eth_requestAccounts",
-            });
-            await window.ethereum.request({
-              method: 'wallet_switchEthereumChain',
-              params: [{ chainId: web3.utils.toHex(1666600000) }],
-            });
-            this.setState({
-              linkedAccount : accounts[0]
-            })
-
-        }
 
         if(this.state.linkedAccount === ''){
             return
         }
 
-        const { ethereum } = window;
 
+        const { ethereum } = window;
         ethereum.on('accountsChanged',  async(accounts) => {
           try{
             accounts =   web3.utils.toChecksumAddress(accounts + '')
@@ -273,14 +291,9 @@ class App extends Component {
       .once('confirmation', async () => {
         this.checkElectionStatus()
       })
-      
-      
-
     } else {
       return false;
     }
-
-
   }
 
   async pinFileToIPFS(file) {
