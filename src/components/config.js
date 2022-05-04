@@ -1,6 +1,6 @@
 export const RPC         =  "https://api.harmony.one"
 export const vrtAddress  =  '0xF7E74aB344167017B0c62F4D719A1D167246f164'
-export const daoAddress  =  '0x47123957eA873eFdd8135bDC00d12E28A3b7B2b2'
+export const daoAddress  =  '0x1BF5555715B5797Ce86B2288F07F6439Ff9e8f40'
 export const pinata_key  =  "2cb0952b2165aa3a6807"
 export const pinata_secret = "8b8279f9f502c8b1a792cf37e95e9ec3ce09b96a7c504d01b8662e8ade908dfa"
 

@@ -1093,7 +1093,7 @@ contract MyDAO is Ownable{
         token = VRTDAO(tokenAddress);
     }
 
-    function createProposal(string memory name, string memory url) external isTokenOwner {
+    function createProposal(string memory name, string memory url) external onlyOwner {
         
 
         // Stores the new proposal.
@@ -1162,7 +1162,7 @@ contract MyDAO is Ownable{
         emit Voted (msg.sender, balance, voteSetting, proposal.status);
     }
 
-    function stopVoting (uint256 voteID) public isTokenOwner{
+    function stopVoting (uint256 voteID) public onlyOwner{
         Proposal storage proposal = proposals[voteID];
         proposal.isVoteEnded = true;
     }
