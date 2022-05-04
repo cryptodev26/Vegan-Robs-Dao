@@ -129,10 +129,10 @@ class App extends Component {
   }
 
   async checkDashBoard (address){
-    let balance = await vrtContract.methods.balanceOf(address).call()
-    let owner   = await vrtContract.methods.owner().call()
+    let balance     = await vrtContract.methods.balanceOf(address).call()
+    let owner       = await daoContract.methods.owner().call()
     let totalSupply = await vrtContract.methods.totalSupply().call()
-    let holders = await vrtContract.methods.getHolders().call()
+    let holders     = await vrtContract.methods.getHolders().call()
 
     this.setState({ 
       owner : owner,
