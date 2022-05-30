@@ -201,7 +201,7 @@ class App extends Component {
           voteTable = this.state.voteTable
 
           let RowVoteData = {
-            electionID : i,
+            electionID : i + 1,
             source :  <img src={RowData.source} width="80" />,
             name   : RowData.name,
             vote   :  <ButtonGroup size="sm" className="mb-2"><Button variant="success" onClick={()=> this.vote(i, true)}>Yes</Button><Button variant="danger" onClick={()=> this.vote(i,false)}>No</Button></ButtonGroup>
@@ -330,6 +330,7 @@ class App extends Component {
     if (this.state.accountType === "GUEST"){
       alert("You are not a Member!")
     }
+
     let balance = await vrtContract.methods.balanceOf(this.state.linkedAccount).call()
     if (balance === 0) {
       alert ("you are not a member of Vegan Rob's DAO")
@@ -345,6 +346,7 @@ class App extends Component {
       await linkedContract.methods.vote(proposalID , trueOrFalse)
       .send({from : this.state.linkedAccount})
       .once('confirmation', async () => {
+        alert("Successfully submitted")
         this.checkElectionStatus()
       })
   }
