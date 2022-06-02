@@ -123,7 +123,7 @@ class App extends Component {
 
 
         this.checkDashBoard(this.state.linkedAccount) 
-        this.checkElectionStatus() 
+        
   }
 
   async checkDashBoard (address){
@@ -131,13 +131,36 @@ class App extends Component {
     let owner       = await daoContract.methods.owner().call()
     let totalSupply = await vrtContract.methods.totalSupply().call()
     let holders     = await vrtContract.methods.getHolders().call()
+    let admin       = await daoContract.methods.admin().call()
 
     this.setState({ 
       owner : owner,
       totalSupply : totalSupply / 1,
       holders : holders,
-      holderTable : []
+      holderTable : [],
+      admin : admin
     })
+
+    if (address === owner){
+      this.setState({
+        accountType : 'OWNER'
+      })
+    } else if (address === admin){
+      this.setState({
+        accountType : 'ADMIN'
+      })
+    } 
+    else {
+      if (balance > 0) {
+        this.setState({
+          accountType : 'MEMBER'
+        })
+      } else {
+        this.setState({
+          accountType : 'GUEST'
+        })
+      } 
+    }
 
     for (let i = 0; i < this.state.holders.length; i++) {
 
@@ -157,102 +180,169 @@ class App extends Component {
       })
     }
 
-    if (address === owner){
-      this.setState({
-        accountType : 'OWNER'
-      })
-    } else {
-      if (balance > 0) {
-        this.setState({
-          accountType : 'MEMBER'
-        })
-      } else {
-        this.setState({
-          accountType : 'GUEST'
-        })
-      } 
-    }
+  this.checkElectionStatus()
   }
 
   async checkElectionStatus() {
-
     let numberOfActive = 0
     let NumberOfElection = await daoContract.methods.proposalIndex().call()
     this.setState({
       electionTable : [],
       voteTable : []
     })
-    for (let i = 0; i < NumberOfElection / 1; i++) {
-      let RowData = await daoContract.methods.proposals(i).call()
-      let tableData = this.state.electionTable
-      let activeOrEnded 
-      let status
-      let voteTable
 
+    console.log("owner", this.state.owner)
 
-      if (RowData.isVoteEnded){
-        activeOrEnded = "Ended"
-      } else {
-        activeOrEnded = "active"
-        numberOfActive += 1
+    if (this.state.linkedAccount === this.state.owner || this.state.linkedAccount === this.state.admin) {
+      console.log("yor are owner")
+      for (let i = 0; i < NumberOfElection / 1; i++) {
+        
+        let RowData = await daoContract.methods.proposals(i).call()
 
-        let votesHistory = await daoContract.methods.votesHistory(this.state.linkedAccount, i).call()
-        if (votesHistory === false){
-          voteTable = this.state.voteTable
+        let tableData = this.state.electionTable
+        let activeOrEnded 
+        let status
+        let voteTable
+        let RowVoteData
+        voteTable = this.state.voteTable
 
-          let RowVoteData = {
+        if (RowData.isVoteEnded){
+          RowVoteData = {
             electionID : i + 1,
             source :  <img src={RowData.source} width="80" />,
             name   : RowData.name,
-            vote   :  <ButtonGroup size="sm" className="mb-2"><Button variant="success" onClick={()=> this.vote(i, true)}>Yes</Button><Button variant="danger" onClick={()=> this.vote(i,false)}>No</Button></ButtonGroup>
+            vote   :  "Ended"
           }
 
-          voteTable.push(RowVoteData)
+        } else {
+          let votesHistory = await daoContract.methods.votesHistory(this.state.linkedAccount, i).call()
 
-          this.setState ({
-            voteTable : voteTable
-          })
+          if (votesHistory === false) {
+              RowVoteData = {
+                electionID : i + 1,
+                source :  <img src={RowData.source} width="80" />,
+                name   : RowData.name,
+                vote   :  <ButtonGroup size="sm" className="mb-2"><Button variant="success" onClick={()=> this.vote(i, true)}>Yes</Button><Button variant="danger" onClick={()=> this.vote(i,false)}>No</Button><Button variant="primary" onClick={()=> this.closeVote(i)}>Close Voting</Button></ButtonGroup>
+              }
+          } else {
+              RowVoteData = {
+                electionID : i + 1,
+                source :  <img src={RowData.source} width="80" />,
+                name   : RowData.name,
+                vote   :  <ButtonGroup size="sm" className="mb-2"><Button variant="primary" onClick={()=> this.closeVote(i)}>Close Voting</Button></ButtonGroup>
+              }
+          }
+          activeOrEnded = "active"
+          numberOfActive += 1
         }
-      }
-      console.log(RowData.status)
-      if (RowData.status === 0){
-        status = "Accepted"
-      } else if (RowData.status === 1) {
-        status = "Rejected"
-      } else {
-        status = "pending"
-      }
-      let time  = await this.unixStamp(RowData.createdAt/1 )
-
-      let newRowData = {
-          id : RowData.id / 1 + 1,
-          source :  <img src={RowData.source} width="100" />,
-          name   : RowData.name,
-          createdAt : time,
-          voteTime  : "24 hours",
-          NumberOfVoted : RowData.NumberOfYesMenber / 1 + RowData.NumberOfNoMember / 1,
-          voteAmount    : RowData.voteAmount / 1,
-          NumberOfYesMenber : RowData.NumberOfYesMenber / 1,
-          votesForYes : RowData.votesForYes / 1,
-          NumberOfNoMember : RowData.NumberOfNoMember / 1,
-          votesForNo : RowData.votesForNo / 1,
-          status : status,
-          isVoteEnded : activeOrEnded
-      }
-
-      tableData.push(newRowData);
-      this.setState({
-        electionTable : tableData
-      })
+    
+        
+            voteTable.push(RowVoteData)
+            this.setState ({
+              voteTable : voteTable
+            })
+          
+        
+        console.log(RowData.status)
+        if (RowData.status === 0){
+          status = "Accepted"
+        } else if (RowData.status === 1) {
+          status = "Rejected"
+        } else {
+          status = "pending"
+        }
+        let time  = await this.unixStamp(RowData.createdAt/1 )
+    
+        let newRowData = {
+            id : RowData.id / 1 + 1,
+            source :  <img src={RowData.source} width="100" />,
+            name   : RowData.name,
+            createdAt : time,
+            NumberOfVoted : RowData.NumberOfYesMenber / 1 + RowData.NumberOfNoMember / 1,
+            voteAmount    : RowData.voteAmount / 1,
+            NumberOfYesMenber : RowData.NumberOfYesMenber / 1,
+            votesForYes : RowData.votesForYes / 1,
+            NumberOfNoMember : RowData.NumberOfNoMember / 1,
+            votesForNo : RowData.votesForNo / 1,
+            status : status,
+            isVoteEnded : activeOrEnded
+        }
+    
+        tableData.push(newRowData);
+        this.setState({
+          electionTable : tableData
+        })
+       }
     }
+    else {
+      for (let i = 0; i < NumberOfElection / 1; i++) {
+        let RowData = await daoContract.methods.proposals(i).call()
+        let tableData = this.state.electionTable
+        let activeOrEnded 
+        let status
+        let voteTable
+        if (RowData.isVoteEnded){
+          activeOrEnded = "Ended"
+        } else {
+          activeOrEnded = "active"
+          numberOfActive += 1
+  
+          let votesHistory = await daoContract.methods.votesHistory(this.state.linkedAccount, i).call()
+          if (votesHistory === false){
+            voteTable = this.state.voteTable
+  
+            let RowVoteData = {
+              electionID : i + 1,
+              source :  <img src={RowData.source} width="80" />,
+              name   : RowData.name,
+              vote   :  <ButtonGroup size="sm" className="mb-2"><Button variant="success" onClick={()=> this.vote(i, true)}>Yes</Button><Button variant="danger" onClick={()=> this.vote(i,false)}>No</Button></ButtonGroup>
+            }
+  
+            voteTable.push(RowVoteData)
+  
+            this.setState ({
+              voteTable : voteTable
+            })
+          }
+        }
+        console.log(RowData.status)
+        if (RowData.status === 0){
+          status = "Accepted"
+        } else if (RowData.status === 1) {
+          status = "Rejected"
+        } else {
+          status = "pending"
+        }
+        let time  = await this.unixStamp(RowData.createdAt/1 )
+  
+        let newRowData = {
+            id : RowData.id / 1 + 1,
+            source :  <img src={RowData.source} width="100" />,
+            name   : RowData.name,
+            createdAt : time,
+            NumberOfVoted : RowData.NumberOfYesMenber / 1 + RowData.NumberOfNoMember / 1,
+            voteAmount    : RowData.voteAmount / 1,
+            NumberOfYesMenber : RowData.NumberOfYesMenber / 1,
+            votesForYes : RowData.votesForYes / 1,
+            NumberOfNoMember : RowData.NumberOfNoMember / 1,
+            votesForNo : RowData.votesForNo / 1,
+            status : status,
+            isVoteEnded : activeOrEnded
+        }
+  
+        tableData.push(newRowData);
+        this.setState({
+          electionTable : tableData
+        })
+      }
+    }
+ 
     console.log(this.state.electionTable)
     this.setState({
       NumberOfElection     : NumberOfElection / 1,
       OpenedNumberElection : numberOfActive,
       EndedNumberElection  : NumberOfElection / 1 - numberOfActive
     })
-
-
   }
 
   async unixStamp (unix_timestamp) {
@@ -351,6 +441,25 @@ class App extends Component {
       })
   }
 
+  async closeVote(proposalID) {
+    if (this.state.linkedAccount !== this.state.owner && this.state.linkedAccount !== this.state.admin) {
+      alert('you dont have a permission')
+    }
+
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: web3.utils.toHex(1666600000) }],
+    });
+
+    const linkedContract = new window.web3.eth.Contract(daoABI, daoAddress);
+      await linkedContract.methods.stopVoting(proposalID)
+      .send({from : this.state.linkedAccount})
+      .once('confirmation', async () => {
+        alert("Successfully Closed")
+        this.checkElectionStatus()
+      })
+  }
+
   render() {
 
 
@@ -399,10 +508,6 @@ class App extends Component {
         label : 'Created At ',
         field : 'createdAt',
       },  
-      {
-        label : 'Duration',
-        field : 'voteTime',
-      },
       {
         label : 'Voted Number',
         field : 'NumberOfVoted',
@@ -566,7 +671,7 @@ class App extends Component {
                     </div>
                   </div><br/><br/><br/><br/>
                   <h3>Members of Vegan Rob's DAO</h3><hr/>
-                  <MDBDataTableV5 hover entriesOptions={[5,10,20,50,100,200,500,1000]} entries={5} pagesAmount={300} data={holderTableData}  materialSearch responsive/><br/><br/>
+                  <MDBDataTableV5 hover entriesOptions={[5,10,20,50,100,200,500,1000]} entries={20} pagesAmount={300} data={holderTableData}  materialSearch responsive/><br/><br/>
                 </Tab.Pane>
 
                 {/* Election Status */}
@@ -605,7 +710,7 @@ class App extends Component {
                     </div>
                   </div><br/><br/><br/><br/>
                   <h3>Election Status</h3><hr/><br/>
-                  <MDBDataTableV5 hover entriesOptions={[5,10,20,50,100,200,500,1000]} entries={5} pagesAmount={300} data={electionTable}  materialSearch responsive/><br/><br/>
+                  <MDBDataTableV5 hover entriesOptions={[5,10,20,50,100,200,500,1000]} entries={20} pagesAmount={300} data={electionTable}  materialSearch responsive/><br/><br/>
 
                 </Tab.Pane>
 
@@ -642,7 +747,7 @@ class App extends Component {
                 {/* vote */}
                 <Tab.Pane eventKey="fouth">
                   <h4>Vote to New Products Election</h4><hr/><br/><br/>
-                  <MDBDataTableV5 hover entriesOptions={[5,10,20,50,100,200,500,1000]} entries={5} pagesAmount={300} data={voteTable}  materialSearch responsive/><br/><br/>
+                  <MDBDataTableV5 hover entriesOptions={[5,10,20,50,100,200,500,1000]} entries={20} pagesAmount={300} data={voteTable}  materialSearch responsive/><br/><br/>
                 </Tab.Pane>
               </Tab.Content>
             </Col>

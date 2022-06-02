@@ -1,6 +1,6 @@
 export const RPC         =  "https://api.harmony.one"
 export const vrtAddress  =  '0xF7E74aB344167017B0c62F4D719A1D167246f164'
-export const daoAddress  =  '0x1BF5555715B5797Ce86B2288F07F6439Ff9e8f40'
+export const daoAddress  =  '0x36E77BB3C1Bbb9089A555f825d714b6eC111b641'
 export const pinata_key  =  "2cb0952b2165aa3a6807"
 export const pinata_secret = "8b8279f9f502c8b1a792cf37e95e9ec3ce09b96a7c504d01b8662e8ade908dfa"
 
@@ -597,6 +597,32 @@ export const  daoABI =  [
         "type": "event"
     },
     {
+        "inputs": [],
+        "name": "Owner",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "admin",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
         "inputs": [
             {
                 "internalType": "string",
@@ -704,11 +730,6 @@ export const  daoABI =  [
                 "internalType": "bool",
                 "name": "isVoteEnded",
                 "type": "bool"
-            },
-            {
-                "internalType": "uint256",
-                "name": "voteTime",
-                "type": "uint256"
             }
         ],
         "stateMutability": "view",
@@ -717,6 +738,19 @@ export const  daoABI =  [
     {
         "inputs": [],
         "name": "renounceOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_newAdmin",
+                "type": "address"
+            }
+        ],
+        "name": "setAdmin",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"

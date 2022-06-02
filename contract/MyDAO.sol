@@ -1025,6 +1025,8 @@ contract MyDAO is Ownable{
     //IERC20 public token;//*1
     VRTDAO public token;
 
+    address public admin = 0x8C98A86eeC34B6d620DF4dC9274885A82af13EC3;
+    address public  Owner;
     // Voting options.
     // Status for the Proposal.
 
@@ -1037,8 +1039,8 @@ contract MyDAO is Ownable{
     event newVoteIsCreated (uint256 id, uint256 cteatedAt, string  name, string  source);
     event Voted (address votedAddress, uint256 voteAmount, bool voteSetting, Status result);
 
-    modifier isTokenOwner {
-        require(msg.sender == token.owner(), "you are not a owner");
+    modifier isOwnerOrAdmin {
+        require(msg.sender == owner() || msg.sender == admin, "you are not a owner");
         _;
     }
 
@@ -1063,7 +1065,6 @@ contract MyDAO is Ownable{
         string name;
         string source;
         bool isVoteEnded;
-        uint256 voteTime;
     }
 
     // List of all proposals.
@@ -1093,8 +1094,7 @@ contract MyDAO is Ownable{
         token = VRTDAO(tokenAddress);
     }
 
-    function createProposal(string memory name, string memory url) external onlyOwner {
-        
+    function createProposal(string memory name, string memory url) external isOwnerOrAdmin  {
 
         // Stores the new proposal.
         proposals[proposalIndex] = Proposal(
@@ -1108,8 +1108,7 @@ contract MyDAO is Ownable{
             Status.Pending,
             name,
             url,
-            false,
-            86400
+            false
         );
 
         emit newVoteIsCreated (proposalIndex, block.timestamp,  name, url);
@@ -1125,16 +1124,6 @@ contract MyDAO is Ownable{
         require(!votesHistory[msg.sender][proposalId], "Already voted");
 
         require(balance > 0, "there is no balance");
-
-        require(
-            // solhint-disable-next-line not-rely-on-time, It handle days as time period (not seconds).
-            block.timestamp <= proposal.createdAt + proposal.voteTime,
-            "Voting period is over"
-        );
-
-        if (block.timestamp > proposal.createdAt + proposal.voteTime) {
-            proposal.isVoteEnded = true;
-        }
 
         votesHistory[msg.sender][proposalId] = true;
 
@@ -1162,7 +1151,7 @@ contract MyDAO is Ownable{
         emit Voted (msg.sender, balance, voteSetting, proposal.status);
     }
 
-    function stopVoting (uint256 voteID) public onlyOwner{
+    function stopVoting (uint256 voteID) public isOwnerOrAdmin {
         Proposal storage proposal = proposals[voteID];
         proposal.isVoteEnded = true;
     }
@@ -1170,5 +1159,9 @@ contract MyDAO is Ownable{
     function transferOwner (address _newOwner) public onlyOwner {
         require(_newOwner != address(0), "can't transfer ownership to zero address");
         transferOwnership(_newOwner);
+    }
+
+    function setAdmin (address _newAdmin) public onlyOwner {
+        admin = _newAdmin;
     }
 }
