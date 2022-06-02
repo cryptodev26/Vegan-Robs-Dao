@@ -229,7 +229,7 @@ class App extends Component {
           source :  <img src={RowData.source} width="100" />,
           name   : RowData.name,
           createdAt : time,
-          voteTime  : RowData.voteTime / 1,
+          voteTime  : "24 hours",
           NumberOfVoted : RowData.NumberOfYesMenber / 1 + RowData.NumberOfNoMember / 1,
           voteAmount    : RowData.voteAmount / 1,
           NumberOfYesMenber : RowData.NumberOfYesMenber / 1,
