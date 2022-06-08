@@ -509,27 +509,27 @@ class App extends Component {
         field : 'createdAt',
       },  
       {
-        label : 'Voted Number',
+        label : 'People who have voted',
         field : 'NumberOfVoted',
       },
       {
-        label : 'Voted Amount',
+        label : 'Potal number of tokens voted',
         field : 'voteAmount',
       },
       {
-        label : 'Number of Yes',
+        label : 'Peoples who voted Yes',
         field : 'NumberOfYesMenber',
       },
       {
-        label : 'Amount of Yes',
+        label : 'Total tokens voted for Yes',
         field : 'votesForYes',
       },
       {
-        label : 'Number of No',
+        label : 'Peoples who voted No',
         field : 'NumberOfNoMember',
       },
       {
-        label : 'Amount of No',
+        label : 'Total tokens voted for No',
         field : 'votesForNo',
       },
       {
